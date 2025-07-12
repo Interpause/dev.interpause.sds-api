@@ -1,13 +1,13 @@
 {
-  "name": "com.interpause.sds-api",
+  "name": "dev.interpause.sds-api",
   "version": "0.0.0",
   "displayName": "SDS API",
   "description": "Handles all API stuff and file caching.",
   "unity": "2022.3",
   "hideInEditor": false,
-  "documentationUrl": "https://github.com/Interpause/com.interpause.sds-api/blob/main/README.md",
-  "changelogUrl": "https://github.com/Interpause/com.interpause.sds-api/blob/main/CHANGELOG.md",
-  "licensesUrl": "https://github.com/Interpause/com.interpause.sds-api/blob/main/LICENSE.md",
+  "documentationUrl": "https://github.com/Interpause/dev.interpause.sds-api/blob/main/README.md",
+  "changelogUrl": "https://github.com/Interpause/dev.interpause.sds-api/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/Interpause/dev.interpause.sds-api/blob/main/LICENSE.md",
   "license": "Refer to LICENSE.md file",
   "dependencies": {
     "com.unity.cloud.gltfast": "6.13.0"
