@@ -1,35 +1,34 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace dev.interpause.sds_api
 {
-    /// Refer to structs.py in the server.
+    /// Refer to structs.py in the server, property names must match.
     namespace structs
     {
         [Serializable]
-        public class GenObjectResponse
+        class GenObjectResponse
         {
             public string task_id;
         }
 
         [Serializable]
-        public class GenEventsResponse
+        class GenEventsResponse
         {
             public List<string> events;
             public int n_received;
         }
 
         [Serializable]
-        public class GenStatusResponse
+        class GenStatusResponse
         {
             public string status;
         }
 
         [Serializable]
-        public class GenResultsResponse
+        class GenResultsResponse
         {
             public bool success;
             public string url;
