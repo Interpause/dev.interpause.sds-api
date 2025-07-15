@@ -18,6 +18,7 @@ namespace dev.interpause.sds_api
     /// </summary>
     public class GenObjectTask : MonoBehaviour
     {
+        public float defaultPollRate = 1f;
         public string UserPrompt { get; private set; }
         public string ImagePath { get; private set; }
         public string TaskId { get; private set; }
@@ -30,14 +31,16 @@ namespace dev.interpause.sds_api
 
         // TODO: Polling sucks is there better way?
         private float _pollRate;
+        // NOTE: This style of directly loading the results only works for singleplayer.
+        // In multiplayer, we will replicate the URL specifically instead.
         private GltfAsset _gltfAsset;
         private int _numEventsReceived;
 
         private void Awake()
         {
             _gltfAsset = gameObject.GetComponent<GltfAsset>();
-            if (_gltfAsset == null)
-                Debug.LogWarning("GltfAsset component is missing on the GameObject, results won't be displayed.");
+            // if (_gltfAsset == null)
+            //     Debug.LogWarning("GltfAsset component is missing on the GameObject, results won't be displayed.");
         }
 
         /// <summary>
@@ -47,7 +50,7 @@ namespace dev.interpause.sds_api
         public void Initialize(
             string prompt,
             string imgPath,
-            float pollRate = 1f
+            float pollRate = -1f
         )
         {
             if (IsBusy)
@@ -58,7 +61,10 @@ namespace dev.interpause.sds_api
 
             UserPrompt = prompt;
             ImagePath = imgPath;
-            _pollRate = pollRate;
+            if (pollRate < 0f)
+                _pollRate = defaultPollRate;
+            else
+                _pollRate = pollRate;
             TaskId = string.Empty;
             ResultUrl = string.Empty;
             Status = TaskStatus.NOT_STARTED;
@@ -112,6 +118,11 @@ namespace dev.interpause.sds_api
             GenObjectAPI.RequestGenerationEvents(
                 (eventsData) =>
                 {
+                    if (eventsData == null)
+                    {
+                        Debug.LogWarning("No events data received.");
+                        return;
+                    }
                     var events = eventsData.Item1;
                     _numEventsReceived = eventsData.Item2;
 
@@ -172,6 +183,7 @@ namespace dev.interpause.sds_api
                         ResultUrl = glbUrl;
                         if (_gltfAsset != null)
                         {
+                            _gltfAsset.ClearScenes();
                             _gltfAsset.Url = ResultUrl;
                             await _gltfAsset.Load(ResultUrl);
                         }
