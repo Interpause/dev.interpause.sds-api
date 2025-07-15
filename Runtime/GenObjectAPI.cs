@@ -5,11 +5,15 @@ using UnityEngine.Networking;
 
 namespace dev.interpause.sds_api
 {
-    // NOTE: All the callbacks will invoke with null if the request fails.
+    /// <summary>
+    /// Direct API wrapper over object generation service.
+    /// 
+    /// NOTE: All callbacks will invoke with null if the request fails.
+    /// </summary>
     public static class GenObjectAPI
     {
-        public static string BaseUrl { get; set; } = "http://nixrobo.home.arpa:3000";
-        public static string ClientId { get; set; } = "my_placeholder";
+        public static string BaseUrl = "http://nixrobo.home.arpa:3000";
+        public static string ClientId = "my_placeholder";
 
         /// <summary>
         /// Requests object generation with the provided user prompt and image path.
@@ -21,7 +25,7 @@ namespace dev.interpause.sds_api
         {
             var url = $"{BaseUrl}/3d_obj/add_task";
 
-            Debug.Log($"Requesting object generation with prompt: `{prompt}` and image path: `{imgPath}`");
+            // Debug.Log($"Requesting object generation with prompt: `{prompt}` and image path: `{imgPath}`");
 
             var imageData = System.IO.File.ReadAllBytes(imgPath);
             var fileName = System.IO.Path.GetFileName(imgPath);
@@ -37,9 +41,9 @@ namespace dev.interpause.sds_api
             {
                 if (req.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log("Object generation request successful.");
+                    // Debug.Log("Object generation request successful.");
                     var res = JsonUtility.FromJson<structs.GenObjectResponse>(req.downloadHandler.text);
-                    Debug.Log($"Task ID: `{res.task_id}`");
+                    // Debug.Log($"Task ID: `{res.task_id}`");
                     callback.Invoke(res.task_id);
                 }
                 else
@@ -134,7 +138,7 @@ namespace dev.interpause.sds_api
                     var res = JsonUtility.FromJson<structs.GenResultsResponse>(req.downloadHandler.text);
                     if (res.success)
                     {
-                        Debug.Log($"Generation results URL: `{res.url}`");
+                        // Debug.Log($"Generation results URL: `{res.url}`");
                         callback.Invoke(res.url);
                     }
                     else
