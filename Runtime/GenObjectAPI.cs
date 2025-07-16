@@ -12,7 +12,7 @@ namespace dev.interpause.sds_api
     /// </summary>
     public static class GenObjectAPI
     {
-        public static string BaseUrl = "http://nixrobo.home.arpa:3000";
+        public static string BaseUrl = "https://vr.ljhjh.xyz";
         public static string ClientId = "my_placeholder";
 
         /// <summary>
@@ -21,19 +21,16 @@ namespace dev.interpause.sds_api
         /// <param name="callback">Callback invoked with the task ID as string.</param>
         /// <param name="prompt">The user's description of their sketch.</param>
         /// <param name="imgPath">The path to the sketch image file.</param>
-        public static void RequestObjectGeneration(Action<string> callback, string prompt, string imgPath)
+        public static void RequestObjectGeneration(Action<string> callback, string prompt, byte[] imageData)
         {
             var url = $"{BaseUrl}/3d_obj/add_task";
 
             // Debug.Log($"Requesting object generation with prompt: `{prompt}` and image path: `{imgPath}`");
 
-            var imageData = System.IO.File.ReadAllBytes(imgPath);
-            var fileName = System.IO.Path.GetFileName(imgPath);
-
             var form = new WWWForm();
             form.AddField("client_id", ClientId);
             form.AddField("prompt", prompt ?? "");
-            form.AddBinaryData("image", imageData, fileName, "image/*");
+            form.AddBinaryData("image", imageData, null, "image/*");
 
             var req = UnityWebRequest.Post(url, form);
 

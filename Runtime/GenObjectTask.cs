@@ -20,7 +20,6 @@ namespace dev.interpause.sds_api
     {
         public float defaultPollRate = 1f;
         public string UserPrompt { get; private set; }
-        public string ImagePath { get; private set; }
         public string TaskId { get; private set; }
         public string ResultUrl { get; private set; }
         public string Status { get; private set; }
@@ -31,6 +30,7 @@ namespace dev.interpause.sds_api
 
         // TODO: Polling sucks is there better way?
         private float _pollRate;
+        private byte[] _imageData;
         // NOTE: This style of directly loading the results only works for singleplayer.
         // In multiplayer, we will replicate the URL specifically instead.
         private GltfAsset _gltfAsset;
@@ -49,7 +49,7 @@ namespace dev.interpause.sds_api
         /// </summary>
         public void Initialize(
             string prompt,
-            string imgPath,
+            byte[] imageData,
             float pollRate = -1f
         )
         {
@@ -60,7 +60,7 @@ namespace dev.interpause.sds_api
             }
 
             UserPrompt = prompt;
-            ImagePath = imgPath;
+            _imageData = imageData;
             if (pollRate < 0f)
                 _pollRate = defaultPollRate;
             else
@@ -102,9 +102,9 @@ namespace dev.interpause.sds_api
                     }
                 },
                 UserPrompt,
-                ImagePath
+                _imageData
             );
-            eventLogReceived?.Invoke($"Starting new gen task with prompt: `{UserPrompt}` and image: `{ImagePath}`");
+            eventLogReceived?.Invoke($"Starting new gen task with image and prompt: `{UserPrompt}`");
         }
 
         private void CheckStatus()
