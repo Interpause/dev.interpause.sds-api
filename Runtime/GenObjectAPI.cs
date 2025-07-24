@@ -12,7 +12,7 @@ namespace dev.interpause.sds_api
     /// </summary>
     public static class GenObjectAPI
     {
-        public static string BaseUrl = "https://vr.ljhjh.xyz";
+        public static string BaseUrl = "https://recovr.interpause.dev";
         public static string ClientId = "my_placeholder";
 
         /// <summary>
