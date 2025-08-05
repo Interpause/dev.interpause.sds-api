@@ -1,22 +1,13 @@
 using System;
-using GLTFast;
 using UnityEngine;
 
 // TODO: Refactor the API to be await based so this isn't callback hell.
 namespace dev.interpause.sds_api
 {
-    public static class TaskStatus
-    {
-        public const string NOT_STARTED = "NOT_STARTED";
-        public const string IN_PROGRESS = "IN_PROGRESS";
-        public const string COMPLETED = "COMPLETED";
-        public const string FAILED = "FAILED";
-    }
-
     /// <summary>
-    /// Represents a pending generation task for an object.
+    /// Represents a pending generation task for an HDRI.
     /// </summary>
-    public class GenObjectTask : MonoBehaviour
+    public class GenHdriTask : MonoBehaviour
     {
         public float defaultPollRate = 1f;
         public string UserPrompt { get; private set; }
@@ -30,37 +21,26 @@ namespace dev.interpause.sds_api
 
         // TODO: Polling sucks is there better way?
         private float _pollRate;
-        private byte[] _imageData;
-        // NOTE: This style of directly loading the results only works for singleplayer.
-        // In multiplayer, we will replicate the URL specifically instead.
-        private GltfAsset _gltfAsset;
+        // NOTE: HDRI results could be loaded into a Skybox or used for environment lighting
+        // but we don't automatically load them like we do with 3D objects
         private int _numEventsReceived;
-
-        private void Awake()
-        {
-            _gltfAsset = gameObject.GetComponent<GltfAsset>();
-            // if (_gltfAsset == null)
-            //     Debug.LogWarning("GltfAsset component is missing on the GameObject, results won't be displayed.");
-        }
 
         /// <summary>
         /// Reinitializing is possible.
-        /// TODO: Set gltf to placeholder object while running.
+        /// TODO: Set environment to placeholder while running.
         /// </summary>
         public void Initialize(
             string prompt,
-            byte[] imageData,
             float pollRate = -1f
         )
         {
             if (IsBusy)
             {
-                Debug.LogWarning("[3D Obj Gen] Cannot reinitialize GenObjectTask while in progress.");
+                Debug.LogWarning("[HDRI Gen] Cannot reinitialize GenHdriTask while in progress.");
                 return;
             }
 
             UserPrompt = prompt;
-            _imageData = imageData;
             if (pollRate < 0f)
                 _pollRate = defaultPollRate;
             else
@@ -76,51 +56,50 @@ namespace dev.interpause.sds_api
         {
             if (IsBusy)
             {
-                Debug.LogWarning("[3D Obj Gen] Cannot submit while in progress.");
+                Debug.LogWarning("[HDRI Gen] Cannot submit while in progress.");
                 return;
             }
             IsBusy = true;
 
-            GenObjectAPI.RequestObjectGeneration(
+            GenHdriAPI.RequestHdriGeneration(
                 (taskId) =>
                 {
                     if (string.IsNullOrEmpty(taskId))
                     {
-                        Debug.LogError("[3D Obj Gen] Failed to get task ID from object generation request.");
-                        eventLogReceived?.Invoke("Failed to get task ID from object generation request.");
+                        Debug.LogError("[HDRI Gen] Failed to get task ID from HDRI generation request.");
+                        eventLogReceived?.Invoke("Failed to get task ID from HDRI generation request.");
                         Status = TaskStatus.FAILED;
                         IsBusy = false;
                         taskFinished?.Invoke();
                     }
                     else
                     {
-                        eventLogReceived?.Invoke($"Object generation request submitted successfully. Task ID: `{taskId}`");
+                        eventLogReceived?.Invoke($"HDRI generation request submitted successfully. Task ID: `{taskId}`");
                         TaskId = taskId;
                         _numEventsReceived = 0;
                         InvokeRepeating(nameof(CheckStatus), 0f, _pollRate);
                         Status = TaskStatus.IN_PROGRESS;
                     }
                 },
-                UserPrompt,
-                _imageData
+                UserPrompt
             );
-            eventLogReceived?.Invoke($"Starting new gen task with image and prompt: `{UserPrompt}`");
+            eventLogReceived?.Invoke($"Starting new HDRI gen task with prompt: `{UserPrompt}`");
         }
 
         private void CheckStatus()
         {
             if (string.IsNullOrEmpty(TaskId))
             {
-                Debug.LogWarning("[3D Obj Gen] No current task ID to poll.");
+                Debug.LogWarning("[HDRI Gen] No current task ID to poll.");
                 return;
             }
 
-            GenObjectAPI.RequestGenerationEvents(
+            GenHdriAPI.RequestGenerationEvents(
                 (eventsData) =>
                 {
                     if (eventsData == null)
                     {
-                        Debug.LogWarning("[3D Obj Gen] No events data received.");
+                        Debug.LogWarning("[HDRI Gen] No events data received.");
                         return;
                     }
                     var events = eventsData.Item1;
@@ -136,7 +115,7 @@ namespace dev.interpause.sds_api
                 _numEventsReceived
             );
 
-            GenObjectAPI.RequestGenerationStatus(
+            GenHdriAPI.RequestGenerationStatus(
                 // See comfy.py for status values.
                 (status) =>
                 {
@@ -149,8 +128,8 @@ namespace dev.interpause.sds_api
                     else if (Status == TaskStatus.FAILED)
                     {
                         CancelInvoke(nameof(CheckStatus));
-                        eventLogReceived?.Invoke($"Generation task `{TaskId}` failed.");
-                        Debug.LogWarning($"[3D Obj Gen] Generation task `{TaskId}` failed.");
+                        eventLogReceived?.Invoke($"HDRI generation task `{TaskId}` failed.");
+                        Debug.LogWarning($"[HDRI Gen] HDRI generation task `{TaskId}` failed.");
                         IsBusy = false;
                         taskFinished?.Invoke();
                     }
@@ -163,32 +142,28 @@ namespace dev.interpause.sds_api
         {
             if (string.IsNullOrEmpty(TaskId))
             {
-                Debug.LogWarning("[3D Obj Gen] No current task ID to check results.");
+                Debug.LogWarning("[HDRI Gen] No current task ID to check results.");
                 return;
             }
 
-            GenObjectAPI.RequestGenerationResults(
-                async (glbUrl) =>
+            GenHdriAPI.RequestGenerationResults(
+                (hdriUrl) =>
                 {
-                    if (string.IsNullOrEmpty(glbUrl))
+                    if (string.IsNullOrEmpty(hdriUrl))
                     {
-                        Debug.LogError("[3D Obj Gen] Failed to get generation results URL.");
-                        eventLogReceived?.Invoke("Failed to get generation results URL.");
+                        Debug.LogError("[HDRI Gen] Failed to get HDRI generation results URL.");
+                        eventLogReceived?.Invoke("Failed to get HDRI generation results URL.");
                         Status = TaskStatus.FAILED;
                         IsBusy = false;
                         taskFinished?.Invoke();
                     }
                     else
                     {
-                        ResultUrl = glbUrl;
-                        if (_gltfAsset != null)
-                        {
-                            _gltfAsset.ClearScenes();
-                            _gltfAsset.Url = ResultUrl;
-                            await _gltfAsset.Load(ResultUrl);
-                        }
-                        // Debug.Log($"Generation task `{TaskId}` completed successfully. Url: {glbUrl}");
-                        eventLogReceived?.Invoke($"Generation task `{TaskId}` completed successfully. Url: {glbUrl}");
+                        ResultUrl = hdriUrl;
+                        // NOTE: Unlike 3D objects, we don't automatically load HDRI into the scene
+                        // The user can access ResultUrl to manually load it into skybox or lighting
+                        // Debug.Log($"HDRI generation task `{TaskId}` completed successfully. Url: {hdriUrl}");
+                        eventLogReceived?.Invoke($"HDRI generation task `{TaskId}` completed successfully. Url: {hdriUrl}");
                         Status = TaskStatus.COMPLETED;
                         IsBusy = false;
                         taskFinished?.Invoke();

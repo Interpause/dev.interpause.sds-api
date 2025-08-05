@@ -6,31 +6,29 @@ using UnityEngine.Networking;
 namespace dev.interpause.sds_api
 {
     /// <summary>
-    /// Direct API wrapper over object generation service.
+    /// Direct API wrapper over HDRI generation service.
     /// 
     /// NOTE: All callbacks will invoke with null if the request fails.
     /// </summary>
-    public static class GenObjectAPI
+    public static class GenHdriAPI
     {
         public static string BaseUrl = "https://recovr.interpause.dev";
         public static string ClientId = "my_placeholder";
 
         /// <summary>
-        /// Requests object generation with the provided user prompt and image path.
+        /// Requests HDRI generation with the provided user prompt.
         /// </summary>
         /// <param name="callback">Callback invoked with the task ID as string.</param>
-        /// <param name="prompt">The user's description of their sketch.</param>
-        /// <param name="imgPath">The path to the sketch image file.</param>
-        public static void RequestObjectGeneration(Action<string> callback, string prompt, byte[] imageData)
+        /// <param name="prompt">The user's description for the HDRI environment.</param>
+        public static void RequestHdriGeneration(Action<string> callback, string prompt)
         {
-            var url = $"{BaseUrl}/3d_obj/add_task";
+            var url = $"{BaseUrl}/hdri/add_task";
 
-            // Debug.Log($"Requesting object generation with prompt: `{prompt}` and image path: `{imgPath}`");
+            // Debug.Log($"Requesting HDRI generation with prompt: `{prompt}`");
 
             var form = new WWWForm();
             form.AddField("client_id", ClientId);
-            form.AddField("prompt", prompt ?? "");
-            form.AddBinaryData("image", imageData, null, "image/*");
+            form.AddField("prompt", prompt);
 
             var req = UnityWebRequest.Post(url, form);
 
@@ -38,14 +36,14 @@ namespace dev.interpause.sds_api
             {
                 if (req.result == UnityWebRequest.Result.Success)
                 {
-                    // Debug.Log("Object generation request successful.");
+                    // Debug.Log("HDRI generation request successful.");
                     var res = JsonUtility.FromJson<structs.GenObjectResponse>(req.downloadHandler.text);
                     // Debug.Log($"Task ID: `{res.task_id}`");
                     callback.Invoke(res.task_id);
                 }
                 else
                 {
-                    Debug.LogError($"[3D Obj Gen] Object generation request failed: `{req.error}`");
+                    Debug.LogError($"[HDRI Gen] HDRI generation request failed: `{req.error}`");
                     callback.Invoke(null);
                 }
             };
@@ -59,7 +57,7 @@ namespace dev.interpause.sds_api
         /// <param name="received">Number of events received so far (to avoid sending all events).</param>
         public static void RequestGenerationEvents(Action<Tuple<List<string>, int>> callback, string taskId, int received = 0)
         {
-            var url = $"{BaseUrl}/3d_obj/get_events";
+            var url = $"{BaseUrl}/hdri/get_events";
 
             var form = new WWWForm();
             form.AddField("client_id", ClientId);
@@ -77,7 +75,7 @@ namespace dev.interpause.sds_api
                 }
                 else
                 {
-                    Debug.LogError($"[3D Obj Gen] Failed to get generation events: `{req.error}`");
+                    Debug.LogError($"[HDRI Gen] Failed to get generation events: `{req.error}`");
                     callback.Invoke(null);
                 }
             };
@@ -90,7 +88,7 @@ namespace dev.interpause.sds_api
         /// <param name="taskId">Task ID of the generation request.</param>
         public static void RequestGenerationStatus(Action<string> callback, string taskId)
         {
-            var url = $"{BaseUrl}/3d_obj/get_status";
+            var url = $"{BaseUrl}/hdri/get_status";
 
             var form = new WWWForm();
             form.AddField("client_id", ClientId);
@@ -107,7 +105,7 @@ namespace dev.interpause.sds_api
                 }
                 else
                 {
-                    Debug.LogError($"[3D Obj Gen] Failed to get generation status: `{req.error}`");
+                    Debug.LogError($"[HDRI Gen] Failed to get generation status: `{req.error}`");
                     callback.Invoke(null);
                 }
             };
@@ -116,11 +114,11 @@ namespace dev.interpause.sds_api
         /// <summary>
         /// Requests the results of a generation task.
         /// </summary>
-        /// <param name="callback">Callback invoked with the .glb 3D model URL as string.</param>
+        /// <param name="callback">Callback invoked with the HDRI file URL as string.</param>
         /// <param name="taskId">Task ID of the generation request.</param>
         public static void RequestGenerationResults(Action<string> callback, string taskId)
         {
-            var url = $"{BaseUrl}/3d_obj/get_result";
+            var url = $"{BaseUrl}/hdri/get_result";
 
             var form = new WWWForm();
             form.AddField("client_id", ClientId);
@@ -140,13 +138,13 @@ namespace dev.interpause.sds_api
                     }
                     else
                     {
-                        Debug.LogError("[3D Obj Gen] Generation failed or no results available.");
+                        Debug.LogError("[HDRI Gen] Generation failed or no results available.");
                         callback.Invoke(null);
                     }
                 }
                 else
                 {
-                    Debug.LogError($"[3D Obj Gen] Failed to get generation results: `{req.error}`");
+                    Debug.LogError($"[HDRI Gen] Failed to get generation results: `{req.error}`");
                     callback.Invoke(null);
                 }
             };
